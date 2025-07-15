@@ -1,33 +1,81 @@
+// api/create_ppt/index.js
+
 import PPTXGenJS from "pptxgenjs";
 import { put } from "@vercel/blob";
-import fs from "fs/promises";
-
-// Logo location: place `sp_global_logo.png` in your repo root or update this path.
-const LOGO_PATH = "./sp_global_logo.png";
 
 function cmToInch(cm) {
   return cm / 2.54;
 }
 
-async function addFooterWithLogo(pptx, slide, pageNum) {
-  const logoWidth = cmToInch(6.0);
-  const logoHeight = cmToInch(2.4);
-  const footerY = cmToInch(18.03);
-  let leftTextX;
-  try {
-    await fs.access(LOGO_PATH);
-    slide.addImage({ path: LOGO_PATH, x: cmToInch(1), y: footerY, w: logoWidth, h: logoHeight });
-    leftTextX = cmToInch(7.2);
-  } catch {
-    leftTextX = cmToInch(1);
-  }
+// --- Custom-drawn S&P Global Market Intelligence "logo" as elements ---
+function addSPGlobalLogo(slide, x, y, width, height) {
+  // Adjust size and positions proportionally
+  const barHeight = height * 0.18;
+  const textHeight = height * 0.4;
+  const gap = height * 0.12;
+
+  // Black underline
+  slide.addShape("rect", {
+    x: x,
+    y: y,
+    w: width * 0.55,
+    h: barHeight,
+    fill: { color: "000000" },
+    line: { color: "000000" }
+  });
+
+  // "S&P Global" Red
+  slide.addText("S&P Global", {
+    x: x,
+    y: y + barHeight + gap / 2,
+    w: width * 0.55,
+    h: textHeight,
+    fontSize: Math.round(textHeight * 0.8 * 21), // scale for pptx font size
+    bold: true,
+    color: "CC0A1E",
+    fontFace: "Arial"
+  });
+
+  // "Market Intelligence" Black
+  slide.addText("Market Intelligence", {
+    x: x,
+    y: y + barHeight + gap / 2 + textHeight,
+    w: width * 1.15,
+    h: textHeight,
+    fontSize: Math.round(textHeight * 0.8 * 21),
+    bold: false,
+    color: "222222",
+    fontFace: "Arial"
+  });
+}
+
+function addFooter(slide, pptx, pageNum) {
+  const footerY = pptx.layout.height - cmToInch(2.0);
+  // Footer disclaimer at left
   slide.addText(
     "Permission to reprint or distribute any content from this presentation requires the prior written approval of S&P Global Market Intelligence.",
-    { x: leftTextX, y: footerY, w: cmToInch(10), h: cmToInch(1.5), fontSize: 10, color: "808080", align: "left" }
+    {
+      x: cmToInch(1),
+      y: footerY,
+      w: cmToInch(18),
+      h: cmToInch(1.3),
+      fontSize: 10,
+      color: "808080",
+      align: "left"
+    }
   );
+  // Page number at bottom right
   slide.addText(
     String(pageNum),
-    { x: pptx.layout.width - cmToInch(3), y: footerY, w: cmToInch(2.5), h: cmToInch(1.5), fontSize: 14, color: "808080", align: "right" }
+    {
+      x: pptx.layout.width - cmToInch(2.5),
+      y: footerY,
+      w: cmToInch(2.0),
+      h: cmToInch(1.3),
+      fontSize: 14,
+      color: "808080",
+      align: "right"
+    }
   );
 }
 
@@ -35,7 +83,7 @@ function addDatesAvailableBox(slide, left, top, width, height, datesText) {
   slide.addShape("rect", { x: left, y: top, w: width, h: height, fill: { color: "e0eaee" }, line: { color: "e0eaee" } });
   slide.addText(
     [
-      { text: "Proposed Dates: ", options: { fontSize: 14, bold: true, color: "CC0000" } },
+      { text: "Proposed Dates: ", options: { fontSize: 14, bold: true, color: "CC0A1E" } },
       { text: datesText, options: { fontSize: 14, color: "000000" } }
     ],
     { x: left, y: top, w: width, h: height, align: "left", valign: "middle" }
@@ -44,14 +92,56 @@ function addDatesAvailableBox(slide, left, top, width, height, datesText) {
 
 function createFrontPage(pptx, heading, dateToPresent) {
   const slide = pptx.addSlide();
-  slide.addShape("rect", { x: 0, y: 0, w: pptx.layout.width, h: pptx.layout.height, fill: { color: "999999" } });
-  slide.addText("S&P Global", { x: cmToInch(1), y: cmToInch(1), w: cmToInch(8), h: cmToInch(2), fontSize: 20, bold: true, color: "FFFFFF" });
-  slide.addText("Market Intelligence", { x: cmToInch(1), y: cmToInch(2.1), w: cmToInch(8), h: cmToInch(2), fontSize: 20, color: "FFFFFF" });
-  slide.addText(heading, { x: cmToInch(1), y: cmToInch(6), w: cmToInch(22), h: cmToInch(4), fontSize: 54, bold: true, color: "FFFFFF" });
-  slide.addText(dateToPresent, { x: cmToInch(1), y: cmToInch(17), w: cmToInch(8), h: cmToInch(2), fontSize: 32, color: "FFFFFF" });
+  // Full-page grey background
+  slide.addShape("rect", {
+    x: 0, y: 0, w: pptx.layout.width, h: pptx.layout.height,
+    fill: { color: "444444" }
+  });
+
+  // Custom S&P Global Market Intelligence "logo" at top left
+  addSPGlobalLogo(
+    slide,
+    cmToInch(1),
+    cmToInch(1.2),
+    cmToInch(10),
+    cmToInch(2.0)
+  );
+
+  // Title (centered, white)
+  slide.addText(heading, {
+    x: 0,
+    y: cmToInch(6),
+    w: pptx.layout.width,
+    h: cmToInch(2.6),
+    fontSize: 52,
+    bold: true,
+    color: "FFFFFF",
+    align: "center"
+  });
+
+  // Date (centered, white, below title)
+  slide.addText(dateToPresent, {
+    x: 0,
+    y: cmToInch(9),
+    w: pptx.layout.width,
+    h: cmToInch(2),
+    fontSize: 32,
+    color: "FFFFFF",
+    align: "center"
+  });
+
+  // “S&P Market Analysis” as subtitle (centered, white, small, below date)
   slide.addText(
-    "S&P Global Market Intelligence",
-    { x: pptx.layout.width - cmToInch(9), y: pptx.layout.height - cmToInch(2), w: cmToInch(8), h: cmToInch(1), fontSize: 14, color: "FFFFFF", align: "right" }
+    "S&P Market Analysis",
+    {
+      x: 0,
+      y: cmToInch(11.3),
+      w: pptx.layout.width,
+      h: cmToInch(1.5),
+      fontSize: 20,
+      color: "FFFFFF",
+      align: "center"
+    }
   );
 }
 
@@ -80,13 +170,13 @@ async function createContentSlide(pptx, slide, idx, venue, pageNum) {
   });
 
   slide.addText("Hotel Overview", {
-    x: overviewLeft, y: overviewTop, w: overviewWidth, h: cmToInch(1), fontSize: 16, bold: true, color: "FF0000"
+    x: overviewLeft, y: overviewTop, w: overviewWidth, h: cmToInch(1), fontSize: 16, bold: true, color: "CC0A1E"
   });
   slide.addText(overviewText, {
     x: overviewLeft, y: overviewTop + cmToInch(1), w: overviewWidth, h: overviewHeight - cmToInch(1), fontSize: 14, color: "000000"
   });
 
-  // Placeholder gray boxes and labels
+  // Placeholder boxes and labels
   const imgW = cmToInch(7), imgH = cmToInch(4), gapH = cmToInch(0.5), gapV = cmToInch(2.54), imgL = cmToInch(14.5), imgT = cmToInch(5.54);
   const labels = ["Main Ballroom", "Bedroom", "Breakout room", "Outdoor space"];
   const positions = [
@@ -104,7 +194,7 @@ async function createContentSlide(pptx, slide, idx, venue, pageNum) {
       x: left, y: top + imgH + cmToInch(0.2), w: imgW, h: cmToInch(1.0), fontSize: 12, align: "center"
     });
   }
-  await addFooterWithLogo(pptx, slide, pageNum);
+  await addFooter(slide, pptx, pageNum);
 }
 
 function parseInput(text) {
