@@ -1,18 +1,18 @@
 import PPTXGenJS from "pptxgenjs";
 import { put } from "@vercel/blob";
 
-// ==== Helpers ====
+// --- Helpers ---
 function cmToInch(cm) {
   return cm / 2.54;
 }
 
+// Creates the S&P Global Market Intelligence "logo" as text with a black underline
 function addSPGlobalLogo(slide, x, y, width, height) {
-  // "S&P Global" logo as drawn elements, not an image
   const barHeight = height * 0.18;
   const textHeight = height * 0.37;
   const gap = height * 0.12;
 
-  // Black underline
+  // Black bar underline
   slide.addShape("rect", {
     x: x,
     y: y,
@@ -22,33 +22,32 @@ function addSPGlobalLogo(slide, x, y, width, height) {
     line: { color: "000000" }
   });
 
-  // "S&P Global" Red
   slide.addText("S&P Global", {
     x: x,
     y: y + barHeight + gap / 2,
     w: width * 0.55,
     h: textHeight,
-    fontSize: Math.round(textHeight * 21), // tweak as needed
+    fontSize: Math.round(textHeight * 21),
     bold: true,
     color: "CC0A1E",
     fontFace: "Arial"
   });
 
-  // "Market Intelligence" Black
   slide.addText("Market Intelligence", {
     x: x,
     y: y + barHeight + gap / 2 + textHeight,
     w: width * 1.15,
     h: textHeight,
     fontSize: Math.round(textHeight * 21),
-    bold: false,
     color: "222222",
     fontFace: "Arial"
   });
 }
 
+// Disclaimer (left) and page number (right); footer for all slides
 function addFooter(slide, pptx, pageNum) {
   const footerY = pptx.layout.height - cmToInch(2.0);
+
   // Disclaimer left
   slide.addText(
     "Permission to reprint or distribute any content from this presentation requires the prior written approval of S&P Global Market Intelligence.",
@@ -62,6 +61,7 @@ function addFooter(slide, pptx, pageNum) {
       align: "left"
     }
   );
+
   // Page number right
   slide.addText(
     String(pageNum),
@@ -77,6 +77,7 @@ function addFooter(slide, pptx, pageNum) {
   );
 }
 
+// Dates textbox for proposed dates
 function addDatesAvailableBox(slide, left, top, width, height, datesText) {
   slide.addShape("rect", { x: left, y: top, w: width, h: height, fill: { color: "e0eaee" }, line: { color: "e0eaee" } });
   slide.addText(
@@ -88,19 +89,13 @@ function addDatesAvailableBox(slide, left, top, width, height, datesText) {
   );
 }
 
-// ---- Slides ----
+// --- Front Page ---
 function createFrontPage(pptx, heading, dateToPresent) {
   const slide = pptx.addSlide();
-slide.background = { fill: "444444" }; // or your desired hex color (e.g., "888888" or "333333")
+  slide.background = { fill: "444444" };
 
-  // S&P logo (drawn) at top left
-  addSPGlobalLogo(
-    slide,
-    cmToInch(1),
-    cmToInch(1.2),
-    cmToInch(10),
-    cmToInch(1.9)
-  );
+  // "Logo" at top left
+  addSPGlobalLogo(slide, cmToInch(1), cmToInch(1.2), cmToInch(10), cmToInch(1.9));
 
   // Title (centered, white)
   slide.addText(heading, {
@@ -125,25 +120,38 @@ slide.background = { fill: "444444" }; // or your desired hex color (e.g., "8888
     align: "center"
   });
 
-
-const footerY = pptx.layout.height - cmToInch(1.4);
-slide.addText(
-  "S&P Global Market Intelligence",
-  {
-    x: pptx.layout.width - cmToInch(10),
-    y: footerY,
-    w: cmToInch(9.1),
-    h: cmToInch(1),
-    fontSize: 15,
+  // Subtitle (centered, white, below date)
+  slide.addText("S&P Market Analysis", {
+    x: 0,
+    y: cmToInch(11.3),
+    w: pptx.layout.width,
+    h: cmToInch(1.5),
+    fontSize: 20,
     color: "FFFFFF",
-    align: "right",
-    fontFace: "Arial"
-  }
-);
+    align: "center"
+  });
 
+  // Footer in white, bottom right
+  const footerY = pptx.layout.height - cmToInch(1.4);
+  slide.addText(
+    "S&P Global Market Intelligence",
+    {
+      x: pptx.layout.width - cmToInch(10),
+      y: footerY,
+      w: cmToInch(9.1),
+      h: cmToInch(1),
+      fontSize: 15,
+      color: "FFFFFF",
+      align: "right",
+      fontFace: "Arial"
+    }
+  );
 }
 
+// --- Content Slide ---
 async function createContentSlide(pptx, slide, idx, venue, pageNum) {
+  slide.background = { fill: "444444" };
+
   const venueName = venue.venue_name || "";
   const venueCity = venue.venue_city || "";
   const venueGuestRooms = venue.venue_guest_rooms || "";
@@ -160,7 +168,6 @@ async function createContentSlide(pptx, slide, idx, venue, pageNum) {
 
   const overviewText =
     `• City: ${venueCity}\n• Guest Rooms: ${venueGuestRooms}\n• Average Daily Rate: ${averageDailyRate}\n• Total Food & Beverages: ${totalFandB}\n• Additional Fees: ${additionalFees}`;
-
   const overviewLeft = cmToInch(1), overviewTop = cmToInch(8), overviewWidth = cmToInch(12), overviewHeight = cmToInch(7);
 
   slide.addShape("rect", {
@@ -192,37 +199,38 @@ async function createContentSlide(pptx, slide, idx, venue, pageNum) {
       x: left, y: top + imgH + cmToInch(0.2), w: imgW, h: cmToInch(1.0), fontSize: 12, align: "center"
     });
   }
-  await addFooter(slide, pptx, pageNum);
 
-// Footer: S&P Global logo in color, bottom left
-const footerX = cmToInch(1);
-const footerY = pptx.layout.height - cmToInch(1.6);
-const footerW = cmToInch(10);
-const lineH = cmToInch(0.65);
+  addFooter(slide, pptx, pageNum);
 
-slide.addText("S&P Global", {
-  x: footerX,
-  y: footerY,
-  w: footerW,
-  h: lineH,
-  fontSize: 15,
-  bold: true,
-  color: "CC0A1E",
-  fontFace: "Arial"
-});
-slide.addText("Market Intelligence", {
-  x: footerX,
-  y: footerY + lineH,
-  w: footerW,
-  h: lineH,
-  fontSize: 15,
-  color: "222222",
-  fontFace: "Arial"
-});
+  // Branded footer, bottom left: "S&P Global" (red, bold), "Market Intelligence" (black)
+  const sx = cmToInch(1);
+  const sy = pptx.layout.height - cmToInch(1.6);
+  const sLineH = cmToInch(0.7);
 
+  slide.addText("S&P Global", {
+    x: sx,
+    y: sy,
+    w: cmToInch(4.5),
+    h: sLineH,
+    fontSize: 15,
+    bold: true,
+    color: "CC0A1E",
+    fontFace: "Arial",
+    align: "left"
+  });
+  slide.addText("Market Intelligence", {
+    x: sx + cmToInch(3.2), // gap after S&P Global
+    y: sy,
+    w: cmToInch(7),
+    h: sLineH,
+    fontSize: 15,
+    color: "222222",
+    fontFace: "Arial",
+    align: "left"
+  });
 }
 
-// ---- Input Parser ----
+// --- Input Parser ---
 function parseInput(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   const heading = lines[0];
@@ -243,7 +251,7 @@ function parseInput(text) {
   return { heading, dateToPresent, num, recs };
 }
 
-// ---- API Handler ----
+// --- API Handler ---
 export default async function handler(req, res) {
   try {
     if (req.method !== 'POST')
@@ -265,11 +273,12 @@ export default async function handler(req, res) {
     if (!inputText) return res.status(400).json({ error: 'Missing input text' });
 
     const pptx = new PPTXGenJS();
-    pptx.defineLayout({ name: "A4", width: 11.6929, height: 8.2677 }); // in inches
+    pptx.defineLayout({ name: "A4", width: 11.6929, height: 8.2677 }); // A4 in inches
     pptx.layout = "A4";
     const { heading, dateToPresent, num, recs } = parseInput(inputText);
 
     createFrontPage(pptx, heading, dateToPresent);
+
     let slideNum = 2;
     for (let i = 0; i < recs.length; ++i) {
       const slide = pptx.addSlide();
@@ -278,14 +287,13 @@ export default async function handler(req, res) {
     }
 
     const filename = "New-Presentation.pptx";
-
     const buffer = await pptx.write("nodebuffer");
 
-    // ---- Overwrite blob with allowOverwrite: true ----
     const { url } = await put(filename, buffer, {
       access: "public",
       allowOverwrite: true
     });
+
     return res.status(200).json({ url });
   } catch (e) {
     console.error(e);
