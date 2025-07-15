@@ -1,9 +1,9 @@
 import PPTXGenJS from "pptxgenjs";
 import { put } from "@vercel/blob";
 import fs from "fs/promises";
-import path from "path";
 
-const LOGO_PATH = "./sp_global_logo.png"; // Place logo in project root or change path accordingly
+// Logo location: place `sp_global_logo.png` in your repo root or update this path.
+const LOGO_PATH = "./sp_global_logo.png";
 
 function cmToInch(cm) {
   return cm / 2.54;
@@ -26,25 +26,25 @@ async function addFooterWithLogo(pptx, slide, pageNum) {
     { x: leftTextX, y: footerY, w: cmToInch(10), h: cmToInch(1.5), fontSize: 10, color: "808080", align: "left" }
   );
   slide.addText(
-    pageNum.toString(),
+    String(pageNum),
     { x: pptx.layout.width - cmToInch(3), y: footerY, w: cmToInch(2.5), h: cmToInch(1.5), fontSize: 14, color: "808080", align: "right" }
   );
 }
 
 function addDatesAvailableBox(slide, left, top, width, height, datesText) {
-  slide.addShape(PPTXGenJS.ShapeType.rect, { x: left, y: top, w: width, h: height, fill: { color: "e0eaee" }, line: { color: "e0eaee" } });
+  slide.addShape("rect", { x: left, y: top, w: width, h: height, fill: { color: "e0eaee" }, line: { color: "e0eaee" } });
   slide.addText(
     [
       { text: "Proposed Dates: ", options: { fontSize: 14, bold: true, color: "CC0000" } },
       { text: datesText, options: { fontSize: 14, color: "000000" } }
     ],
-    { x: left, y: top, w: width, h: height, align: "left", fontSize: 14, valign: "middle" }
+    { x: left, y: top, w: width, h: height, align: "left", valign: "middle" }
   );
 }
 
 function createFrontPage(pptx, heading, dateToPresent) {
   const slide = pptx.addSlide();
-  slide.addShape(PPTXGenJS.ShapeType.rect, { x: 0, y: 0, w: pptx.layout.width, h: pptx.layout.height, fill: { color: "999999" } });
+  slide.addShape("rect", { x: 0, y: 0, w: pptx.layout.width, h: pptx.layout.height, fill: { color: "999999" } });
   slide.addText("S&P Global", { x: cmToInch(1), y: cmToInch(1), w: cmToInch(8), h: cmToInch(2), fontSize: 20, bold: true, color: "FFFFFF" });
   slide.addText("Market Intelligence", { x: cmToInch(1), y: cmToInch(2.1), w: cmToInch(8), h: cmToInch(2), fontSize: 20, color: "FFFFFF" });
   slide.addText(heading, { x: cmToInch(1), y: cmToInch(6), w: cmToInch(22), h: cmToInch(4), fontSize: 54, bold: true, color: "FFFFFF" });
@@ -68,14 +68,14 @@ async function createContentSlide(pptx, slide, idx, venue, pageNum) {
     `Recommendation #${idx + 1} – ${venueName} : ${venueGuestRooms} rooms`,
     { x: cmToInch(1), y: cmToInch(1), w: cmToInch(21), h: cmToInch(2), fontSize: 32, bold: true }
   );
-
   addDatesAvailableBox(slide, cmToInch(1), cmToInch(5.54), cmToInch(10), cmToInch(1.2), proposedDates);
 
   const overviewText =
     `• City: ${venueCity}\n• Guest Rooms: ${venueGuestRooms}\n• Average Daily Rate: ${averageDailyRate}\n• Total Food & Beverages: ${totalFandB}\n• Additional Fees: ${additionalFees}`;
+
   const overviewLeft = cmToInch(1), overviewTop = cmToInch(8), overviewWidth = cmToInch(12), overviewHeight = cmToInch(7);
 
-  slide.addShape(PPTXGenJS.ShapeType.rect, {
+  slide.addShape("rect", {
     x: overviewLeft, y: overviewTop, w: overviewWidth, h: overviewHeight, line: { color: "000000", width: 2 }, fill: { color: "FFFFFF" }
   });
 
@@ -97,7 +97,7 @@ async function createContentSlide(pptx, slide, idx, venue, pageNum) {
   ];
   for (let i = 0; i < labels.length; ++i) {
     const [left, top] = positions[i];
-    slide.addShape(PPTXGenJS.ShapeType.rect, {
+    slide.addShape("rect", {
       x: left, y: top, w: imgW, h: imgH, fill: { color: "e6e6e6" }, line: { color: "c8c8c8" }
     });
     slide.addText(labels[i], {
@@ -151,7 +151,6 @@ export default async function handler(req, res) {
     pptx.defineLayout({ name: "A4", width: 11.6929, height: 8.2677 }); // in inches
     pptx.layout = "A4";
     const { heading, dateToPresent, num, recs } = parseInput(inputText);
-
     createFrontPage(pptx, heading, dateToPresent);
 
     let slideNum = 2;
