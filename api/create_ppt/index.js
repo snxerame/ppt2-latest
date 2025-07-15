@@ -6,47 +6,10 @@ function cmToInch(cm) {
   return cm / 2.54;
 }
 
-// Creates the S&P Global Market Intelligence "logo" as text with a black underline
-function addSPGlobalLogo(slide, x, y, width, height) {
-  const barHeight = height * 0.18;
-  const textHeight = height * 0.37;
-  const gap = height * 0.12;
-
-  // Black bar underline
-  slide.addShape("rect", {
-    x: x,
-    y: y,
-    w: width * 0.55,
-    h: barHeight,
-    fill: { color: "000000" },
-    line: { color: "000000" }
-  });
-
-  slide.addText("S&P Global", {
-    x: x,
-    y: y + barHeight + gap / 2,
-    w: width * 0.55,
-    h: textHeight,
-    fontSize: Math.round(textHeight * 21),
-    bold: true,
-    color: "CC0A1E",
-    fontFace: "Arial"
-  });
-
-  slide.addText("Market Intelligence", {
-    x: x,
-    y: y + barHeight + gap / 2 + textHeight,
-    w: width * 1.15,
-    h: textHeight,
-    fontSize: Math.round(textHeight * 21),
-    color: "222222",
-    fontFace: "Arial"
-  });
-}
 
 // Disclaimer (left) and page number (right); footer for all slides
 function addFooter(slide, pptx, pageNum) {
-  const footerY = pptx.layout.height - cmToInch(2.0);
+  const footerY = 7.4803;
 
   // Disclaimer left
   slide.addText(
@@ -59,20 +22,6 @@ function addFooter(slide, pptx, pageNum) {
       fontSize: 10,
       color: "808080",
       align: "left"
-    }
-  );
-
-  // Page number right
-  slide.addText(
-    String(pageNum),
-    {
-      x: pptx.layout.width - cmToInch(2.5),
-      y: footerY,
-      w: cmToInch(2.0),
-      h: cmToInch(1.3),
-      fontSize: 14,
-      color: "808080",
-      align: "right"
     }
   );
 }
@@ -93,9 +42,6 @@ function addDatesAvailableBox(slide, left, top, width, height, datesText) {
 function createFrontPage(pptx, heading, dateToPresent) {
   const slide = pptx.addSlide();
   slide.background = { fill: "444444" };
-
-  // "Logo" at top left
-  addSPGlobalLogo(slide, cmToInch(1), cmToInch(1.2), cmToInch(10), cmToInch(1.9));
 
   // Title (centered, white)
   slide.addText(heading, {
