@@ -6,36 +6,7 @@ function cmToInch(cm) {
   return cm / 2.54;
 }
 
-// Draws S&P Global Market Intelligence logo (text + black underline)
-function addSPGlobalLogo(slide, x, y, width, height) {
-  const barHeight = height * 0.18;
-  const textHeight = height * 0.37;
-  const gap = height * 0.12;
-  // Black underline bar
-  slide.addShape("rect", {
-    x, y, w: width * 0.55, h: barHeight,
-    fill: { color: "000000" }, line: { color: "000000" }
-  });
-  slide.addText("S&P Global", {
-    x,
-    y: y + barHeight + gap / 2,
-    w: width * 0.55,
-    h: textHeight,
-    fontSize: Math.round(textHeight * 21),
-    bold: true,
-    color: "CC0A1E",
-    fontFace: "Arial"
-  });
-  slide.addText("Market Intelligence", {
-    x,
-    y: y + barHeight + gap / 2 + textHeight,
-    w: width * 0.55,
-    h: textHeight,
-    fontSize: Math.round(textHeight * 21),
-    color: "222222",
-    fontFace: "Arial"
-  });
-}
+
 
 // Adds disclaimer (bottom left) and page number (bottom right) on all slides
 function addFooter(slide, pageNum) {
@@ -86,8 +57,6 @@ function createFrontPage(pptx, heading, dateToPresent) {
   const slide = pptx.addSlide();
   slide.background = { fill: "444444" };
 
-  // "Logo" at top left as drawn text/bar
-  addSPGlobalLogo(slide, cmToInch(1), cmToInch(1.2), cmToInch(10), cmToInch(1.9));
 
   // Title (centered, white)
   slide.addText(heading, {
@@ -125,7 +94,7 @@ function createFrontPage(pptx, heading, dateToPresent) {
 
 // ------ Content Slide ------
 async function createContentSlide(pptx, slide, idx, venue, pageNum) {
-  slide.background = { fill: "444444" };
+  
 
   const venueName = venue.venue_name || "";
   const venueCity = venue.venue_city || "";
