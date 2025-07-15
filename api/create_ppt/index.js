@@ -91,11 +91,7 @@ function addDatesAvailableBox(slide, left, top, width, height, datesText) {
 // ---- Slides ----
 function createFrontPage(pptx, heading, dateToPresent) {
   const slide = pptx.addSlide();
-  // Full-page grey background
-  slide.addShape("rect", {
-    x: 0, y: 0, w: pptx.layout.width, h: pptx.layout.height,
-    fill: { color: "444444" }
-  });
+slide.background = { fill: "444444" }; // or your desired hex color (e.g., "888888" or "333333")
 
   // S&P logo (drawn) at top left
   addSPGlobalLogo(
@@ -129,19 +125,22 @@ function createFrontPage(pptx, heading, dateToPresent) {
     align: "center"
   });
 
-  // Subtitle (centered, white, below date)
-  slide.addText(
-    "S&P Market Analysis",
-    {
-      x: 0,
-      y: cmToInch(11.3),
-      w: pptx.layout.width,
-      h: cmToInch(1.5),
-      fontSize: 20,
-      color: "FFFFFF",
-      align: "center"
-    }
-  );
+
+const footerY = pptx.layout.height - cmToInch(1.4);
+slide.addText(
+  "S&P Global Market Intelligence",
+  {
+    x: pptx.layout.width - cmToInch(10),
+    y: footerY,
+    w: cmToInch(9.1),
+    h: cmToInch(1),
+    fontSize: 15,
+    color: "FFFFFF",
+    align: "right",
+    fontFace: "Arial"
+  }
+);
+
 }
 
 async function createContentSlide(pptx, slide, idx, venue, pageNum) {
@@ -194,6 +193,33 @@ async function createContentSlide(pptx, slide, idx, venue, pageNum) {
     });
   }
   await addFooter(slide, pptx, pageNum);
+
+// Footer: S&P Global logo in color, bottom left
+const footerX = cmToInch(1);
+const footerY = pptx.layout.height - cmToInch(1.6);
+const footerW = cmToInch(10);
+const lineH = cmToInch(0.65);
+
+slide.addText("S&P Global", {
+  x: footerX,
+  y: footerY,
+  w: footerW,
+  h: lineH,
+  fontSize: 15,
+  bold: true,
+  color: "CC0A1E",
+  fontFace: "Arial"
+});
+slide.addText("Market Intelligence", {
+  x: footerX,
+  y: footerY + lineH,
+  w: footerW,
+  h: lineH,
+  fontSize: 15,
+  color: "222222",
+  fontFace: "Arial"
+});
+
 }
 
 // ---- Input Parser ----
@@ -251,7 +277,8 @@ export default async function handler(req, res) {
       slideNum += 1;
     }
 
-    const filename = (heading ? heading.replace(/\s+/g, "_") : "presentation") + ".pptx";
+    const filename = "New-Presentation.pptx";
+
     const buffer = await pptx.write("nodebuffer");
 
     // ---- Overwrite blob with allowOverwrite: true ----
