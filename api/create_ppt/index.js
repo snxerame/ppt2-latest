@@ -253,7 +253,11 @@ export default async function handler(req, res) {
     const filename = (heading ? heading.replace(/\s+/g, "_") : "presentation") + ".pptx";
     const buffer = await pptx.write("nodebuffer");
 
-    const { url } = await put(filename, buffer, { access: "public" });
+  const { url } = await put(filename, buffer, {
+  access: "public",
+  allowOverwrite: true
+});
+
     return res.status(200).json({ url });
   } catch (e) {
     console.error(e);
