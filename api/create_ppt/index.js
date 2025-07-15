@@ -1,17 +1,15 @@
-// api/create_ppt/index.js
-
 import PPTXGenJS from "pptxgenjs";
 import { put } from "@vercel/blob";
 
+// ==== Helpers ====
 function cmToInch(cm) {
   return cm / 2.54;
 }
 
-// --- Custom-drawn S&P Global Market Intelligence "logo" as elements ---
 function addSPGlobalLogo(slide, x, y, width, height) {
-  // Adjust size and positions proportionally
+  // "S&P Global" logo as drawn elements, not an image
   const barHeight = height * 0.18;
-  const textHeight = height * 0.4;
+  const textHeight = height * 0.37;
   const gap = height * 0.12;
 
   // Black underline
@@ -30,7 +28,7 @@ function addSPGlobalLogo(slide, x, y, width, height) {
     y: y + barHeight + gap / 2,
     w: width * 0.55,
     h: textHeight,
-    fontSize: Math.round(textHeight * 0.8 * 21), // scale for pptx font size
+    fontSize: Math.round(textHeight * 21), // tweak as needed
     bold: true,
     color: "CC0A1E",
     fontFace: "Arial"
@@ -42,7 +40,7 @@ function addSPGlobalLogo(slide, x, y, width, height) {
     y: y + barHeight + gap / 2 + textHeight,
     w: width * 1.15,
     h: textHeight,
-    fontSize: Math.round(textHeight * 0.8 * 21),
+    fontSize: Math.round(textHeight * 21),
     bold: false,
     color: "222222",
     fontFace: "Arial"
@@ -51,7 +49,7 @@ function addSPGlobalLogo(slide, x, y, width, height) {
 
 function addFooter(slide, pptx, pageNum) {
   const footerY = pptx.layout.height - cmToInch(2.0);
-  // Footer disclaimer at left
+  // Disclaimer left
   slide.addText(
     "Permission to reprint or distribute any content from this presentation requires the prior written approval of S&P Global Market Intelligence.",
     {
@@ -64,7 +62,7 @@ function addFooter(slide, pptx, pageNum) {
       align: "left"
     }
   );
-  // Page number at bottom right
+  // Page number right
   slide.addText(
     String(pageNum),
     {
@@ -90,6 +88,7 @@ function addDatesAvailableBox(slide, left, top, width, height, datesText) {
   );
 }
 
+// ---- Slides ----
 function createFrontPage(pptx, heading, dateToPresent) {
   const slide = pptx.addSlide();
   // Full-page grey background
@@ -98,13 +97,13 @@ function createFrontPage(pptx, heading, dateToPresent) {
     fill: { color: "444444" }
   });
 
-  // Custom S&P Global Market Intelligence "logo" at top left
+  // S&P logo (drawn) at top left
   addSPGlobalLogo(
     slide,
     cmToInch(1),
     cmToInch(1.2),
     cmToInch(10),
-    cmToInch(2.0)
+    cmToInch(1.9)
   );
 
   // Title (centered, white)
@@ -130,7 +129,7 @@ function createFrontPage(pptx, heading, dateToPresent) {
     align: "center"
   });
 
-  // “S&P Market Analysis” as subtitle (centered, white, small, below date)
+  // Subtitle (centered, white, below date)
   slide.addText(
     "S&P Market Analysis",
     {
@@ -197,6 +196,7 @@ async function createContentSlide(pptx, slide, idx, venue, pageNum) {
   await addFooter(slide, pptx, pageNum);
 }
 
+// ---- Input Parser ----
 function parseInput(text) {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   const heading = lines[0];
@@ -217,6 +217,7 @@ function parseInput(text) {
   return { heading, dateToPresent, num, recs };
 }
 
+// ---- API Handler ----
 export default async function handler(req, res) {
   try {
     if (req.method !== 'POST')
@@ -241,8 +242,8 @@ export default async function handler(req, res) {
     pptx.defineLayout({ name: "A4", width: 11.6929, height: 8.2677 }); // in inches
     pptx.layout = "A4";
     const { heading, dateToPresent, num, recs } = parseInput(inputText);
-    createFrontPage(pptx, heading, dateToPresent);
 
+    createFrontPage(pptx, heading, dateToPresent);
     let slideNum = 2;
     for (let i = 0; i < recs.length; ++i) {
       const slide = pptx.addSlide();
@@ -253,11 +254,11 @@ export default async function handler(req, res) {
     const filename = (heading ? heading.replace(/\s+/g, "_") : "presentation") + ".pptx";
     const buffer = await pptx.write("nodebuffer");
 
-  const { url } = await put(filename, buffer, {
-  access: "public",
-  allowOverwrite: true
-});
-
+    // ---- Overwrite blob with allowOverwrite: true ----
+    const { url } = await put(filename, buffer, {
+      access: "public",
+      allowOverwrite: true
+    });
     return res.status(200).json({ url });
   } catch (e) {
     console.error(e);
