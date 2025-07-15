@@ -1,17 +1,47 @@
 import PPTXGenJS from "pptxgenjs";
-import { put } from "@vercel/blob";
+import { put, del } from "@vercel/blob";
 
-// --- Helpers ---
+// --------- Helpers ----------
 function cmToInch(cm) {
   return cm / 2.54;
 }
 
+// Draws S&P Global Market Intelligence logo (text + black underline)
+function addSPGlobalLogo(slide, x, y, width, height) {
+  const barHeight = height * 0.18;
+  const textHeight = height * 0.37;
+  const gap = height * 0.12;
+  // Black underline bar
+  slide.addShape("rect", {
+    x, y, w: width * 0.55, h: barHeight,
+    fill: { color: "000000" }, line: { color: "000000" }
+  });
+  slide.addText("S&P Global", {
+    x,
+    y: y + barHeight + gap / 2,
+    w: width * 0.55,
+    h: textHeight,
+    fontSize: Math.round(textHeight * 21),
+    bold: true,
+    color: "CC0A1E",
+    fontFace: "Arial"
+  });
+  slide.addText("Market Intelligence", {
+    x,
+    y: y + barHeight + gap / 2 + textHeight,
+    w: width * 0.55,
+    h: textHeight,
+    fontSize: Math.round(textHeight * 21),
+    color: "222222",
+    fontFace: "Arial"
+  });
+}
 
-// Disclaimer (left) and page number (right); footer for all slides
-function addFooter(slide, pptx, pageNum) {
-  const footerY = 7.4803;
-
-  // Disclaimer left
+// Adds disclaimer (bottom left) and page number (bottom right) on all slides
+function addFooter(slide, pageNum) {
+  // Hardcoded for A4 landscape: 8.2677 inch height, minus ~2.0cm bottom margin for footer.
+  const footerY = 7.48; // 8.2677 - 0.7874 (2.0 cm in inches)
+  // Disclaimer (left)
   slide.addText(
     "Permission to reprint or distribute any content from this presentation requires the prior written approval of S&P Global Market Intelligence.",
     {
@@ -22,6 +52,19 @@ function addFooter(slide, pptx, pageNum) {
       fontSize: 10,
       color: "808080",
       align: "left"
+    }
+  );
+  // Page number (right)
+  slide.addText(
+    String(pageNum),
+    {
+      x: 11.7 - cmToInch(2.5), // A4 width minus 2.5cm
+      y: footerY,
+      w: cmToInch(2.0),
+      h: cmToInch(1.3),
+      fontSize: 14,
+      color: "808080",
+      align: "right"
     }
   );
 }
@@ -38,52 +81,38 @@ function addDatesAvailableBox(slide, left, top, width, height, datesText) {
   );
 }
 
-// --- Front Page ---
+// ------ Front Page ------
 function createFrontPage(pptx, heading, dateToPresent) {
   const slide = pptx.addSlide();
   slide.background = { fill: "444444" };
 
+  // "Logo" at top left as drawn text/bar
+  addSPGlobalLogo(slide, cmToInch(1), cmToInch(1.2), cmToInch(10), cmToInch(1.9));
+
   // Title (centered, white)
   slide.addText(heading, {
-    x: 0,
-    y: cmToInch(6),
-    w: pptx.layout.width,
-    h: cmToInch(2.6),
-    fontSize: 52,
-    bold: true,
-    color: "FFFFFF",
-    align: "center"
+    x: 0, y: cmToInch(6), w: pptx.layout.width, h: cmToInch(2.6),
+    fontSize: 52, bold: true, color: "FFFFFF", align: "center"
   });
 
   // Date (centered, white, below title)
   slide.addText(dateToPresent, {
-    x: 0,
-    y: cmToInch(9),
-    w: pptx.layout.width,
-    h: cmToInch(2),
-    fontSize: 32,
-    color: "FFFFFF",
-    align: "center"
+    x: 0, y: cmToInch(9), w: pptx.layout.width, h: cmToInch(2),
+    fontSize: 32, color: "FFFFFF", align: "center"
   });
 
   // Subtitle (centered, white, below date)
   slide.addText("S&P Market Analysis", {
-    x: 0,
-    y: cmToInch(11.3),
-    w: pptx.layout.width,
-    h: cmToInch(1.5),
-    fontSize: 20,
-    color: "FFFFFF",
-    align: "center"
+    x: 0, y: cmToInch(11.3), w: pptx.layout.width, h: cmToInch(1.5),
+    fontSize: 20, color: "FFFFFF", align: "center"
   });
 
   // Footer in white, bottom right
-  const footerY = pptx.layout.height - cmToInch(1.4);
   slide.addText(
     "S&P Global Market Intelligence",
     {
-      x: pptx.layout.width - cmToInch(10),
-      y: footerY,
+      x: 11.7 - cmToInch(10), // A4 width minus 10cm
+      y: 7.48, // ~2cm from bottom
       w: cmToInch(9.1),
       h: cmToInch(1),
       fontSize: 15,
@@ -94,7 +123,7 @@ function createFrontPage(pptx, heading, dateToPresent) {
   );
 }
 
-// --- Content Slide ---
+// ------ Content Slide ------
 async function createContentSlide(pptx, slide, idx, venue, pageNum) {
   slide.background = { fill: "444444" };
 
@@ -146,17 +175,17 @@ async function createContentSlide(pptx, slide, idx, venue, pageNum) {
     });
   }
 
-  addFooter(slide, pptx, pageNum);
+  addFooter(slide, pageNum);
 
   // Branded footer, bottom left: "S&P Global" (red, bold), "Market Intelligence" (black)
   const sx = cmToInch(1);
-  const sy = pptx.layout.height - cmToInch(1.6);
+  const sy = 7.48; // A4 height - 2cm
   const sLineH = cmToInch(0.7);
 
   slide.addText("S&P Global", {
     x: sx,
     y: sy,
-    w: cmToInch(4.5),
+    w: cmToInch(3.4),
     h: sLineH,
     fontSize: 15,
     bold: true,
@@ -165,7 +194,7 @@ async function createContentSlide(pptx, slide, idx, venue, pageNum) {
     align: "left"
   });
   slide.addText("Market Intelligence", {
-    x: sx + cmToInch(3.2), // gap after S&P Global
+    x: sx + cmToInch(3.2),
     y: sy,
     w: cmToInch(7),
     h: sLineH,
@@ -219,7 +248,7 @@ export default async function handler(req, res) {
     if (!inputText) return res.status(400).json({ error: 'Missing input text' });
 
     const pptx = new PPTXGenJS();
-    pptx.defineLayout({ name: "A4", width: 11.6929, height: 8.2677 }); // A4 in inches
+    pptx.defineLayout({ name: "A4", width: 11.6929, height: 8.2677 });
     pptx.layout = "A4";
     const { heading, dateToPresent, num, recs } = parseInput(inputText);
 
@@ -233,11 +262,19 @@ export default async function handler(req, res) {
     }
 
     const filename = "New-Presentation.pptx";
+
     const buffer = await pptx.write("nodebuffer");
 
+    // Delete possible previous file before upload!
+    try {
+      await del(filename);
+    } catch (err) {
+      // It's fine for the file not to exist yet; ignore error.
+    }
+
     const { url } = await put(filename, buffer, {
-      access: "public",
-      allowOverwrite: true
+      access: "public"
+      // allowOverwrite: true not needed since we're deleting first
     });
 
     return res.status(200).json({ url });
