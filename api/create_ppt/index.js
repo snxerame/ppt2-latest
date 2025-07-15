@@ -261,7 +261,8 @@ export default async function handler(req, res) {
       slideNum += 1;
     }
 
-    const filename = "New-Presentation.pptx";
+    const filename = `${new Date().toISOString().replace(/[:T]/g, '-').slice(0,19)}.pptx`;
+
 
     const buffer = await pptx.write("nodebuffer");
 
