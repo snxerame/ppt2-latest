@@ -14,7 +14,7 @@ function addFooter(slide, pageNum) {
   const footerY = 7.48; // 8.2677 - 0.7874 (2.0 cm in inches)
   // Disclaimer (left)
   slide.addText(
-    "Permission to reprint or distribute any content from this presentation requires the prior written approval of S&P Global Market Intelligence.",
+    "",
     {
       x: cmToInch(1),
       y: footerY,
